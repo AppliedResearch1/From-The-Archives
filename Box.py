@@ -1,31 +1,47 @@
 # Import necessary libraries
-from deepface import DeepFace  # Importing DeepFace for face recognition
-from deepface.basemodels import VGGFace  # Importing VGGFace model for face recognition
-import pandas as pd  # Pandas for data manipulation
+from retinaface import RetinaFace  # Importing RetinaFace for face detection
+import cv2  # OpenCV for image processing
+import matplotlib.pyplot as plt  # Matplotlib for plotting images
 
-# Define image paths
-target_img_path = "target.jpg"
-db_path = "C:\\workspace\\my_db"  # Note: Double backslashes are required to escape the backslash character
 
-# Load the VGGFace model for face recognition
-model = VGGFace.load_model()
 
-# Find similar faces in a database using DeepFace
-# `find` method searches for similar faces to the target image in the specified database
-# Parameters:
-#   - `img_path`: Path to the target image file.
-#   - `db_path`: Path to the directory containing the database of images.
-#   - `model_name`: Name of the face recognition model to be used (here, VGGFace).
-#   - `model`: Pre-trained face recognition model (here, loaded VGGFace model).
-#   - `distance_metric`: Distance metric used for comparing faces (e.g., 'cosine' for cosine similarity).
-df = DeepFace.find(img_path=target_img_path, db_path=db_path, model_name=VGGFace, model=model, distance_metric='cosine')
+# Path to the image file
+img_path = "target.jpg"
+# Load the image using OpenCV
+img = cv2.imread(img_path)
 
-# Display the first few rows of the DataFrame containing the results
-df.head()
+# Detect faces in the image using RetinaFace
+# `detect_faces` returns a dictionary where each key represents a detected face
+resp = RetinaFace.detect_faces(img_path)
+# Count the number of detected faces by counting the keys in the response dictionary
+num_faces = len(resp.keys())
 
-# Check if any matches were found
-if df.shape[0] > 0:
-    # Get the identity of the first matched face
-    matched = df.iloc[0].identity
-    # Print the identity of the matched face
-    print(matched)
+
+# Iterate over each detected face
+for key in resp.keys():
+    # Get the information about the detected face using its key
+    identity = resp[key]
+    # Extract the coordinates of the bounding box surrounding the face
+    facial_area = identity['facial_area']
+    # Draw a rectangle around the detected face on the image
+    cv2.rectangle(img, (facial_area[2], facial_area[3]), (facial_area[0], facial_area[1]), (255, 255, 255), 1)
+
+
+# Plot the image with detected faces using Matplotlib
+plt.figure(figsize=(20, 20))
+plt.imshow(img)
+plt.show()
+
+
+# Parameters Explanation:
+# - `img_path`: Path to the input image file.
+# - `img`: The loaded image using OpenCV.
+# - `resp`: The response from the face detection model. 
+#           It's a dictionary where each key corresponds to a detected face. 
+#           Each value contains information about the detected face, such as its bounding box coordinates.
+# - `num_faces`: Number of detected faces in the image.
+# - `identity`: Information about each detected face, extracted from the response dictionary.
+# - `facial_area`: Coordinates of the bounding box around each detected face.
+# - `plt.figure(figsize=(20, 20))`: Configuring the size of the plot to display the image with detected faces.
+# - `plt.imshow(img)`: Displaying the image with detected faces.
+# - `plt.show()`: Showing the plot with the image.
